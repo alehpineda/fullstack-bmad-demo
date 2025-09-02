@@ -123,6 +123,13 @@ This workflow runs on every pull request targeting the `master` branch.
         *   **Linting:** Runs `ruff format --check .` and `ruff check .` to enforce code style and quality.
         *   **Type Checking:** Runs `mypy .` to validate type hints.
         *   **Testing:** Runs `pytest` to execute all unit and integration tests.
+    2.  **`smoke-test`**:
+        *   **Needs:** `lint-and-test`
+        *   **Description:** Runs after tests pass to ensure the containerized application starts and responds correctly.
+        *   **Steps:**
+            *   Builds and starts the services using `docker compose up -d`.
+            *   Waits for the backend health check to pass.
+            *   Executes `curl http://localhost:8080/api/pokemon/25` and asserts a `200 OK` response, validating the full stack.
 
 #### 5.2. Frontend CI Pipeline (`.github/workflows/frontend-ci.yaml`)
 
@@ -176,7 +183,13 @@ This section outlines the API endpoints the backend will expose.
 *   **`200 OK` (Success)**: Returns a `text/html` partial displaying the Pokémon card.
 *   **`200 OK` (Not Found)**: Returns a `text/html` partial displaying a "not found" message.
 
-#### 7.3. API Rate Limiting
+#### 7.3. Health Check Endpoint
+
+**Endpoint:** `GET /health`
+**Description:** A simple endpoint to verify that the API service is running and available.
+*   **`200 OK`**: Returns `{"status": "ok"}`. This is used for container health checks.
+
+#### 7.4. API Rate Limiting
 
 A global, IP-based rate limit of **20 requests per minute** will be implemented using the `slowapi` library to prevent abuse. Exceeding the limit will result in a `429 Too Many Requests` response.
 
@@ -246,8 +259,60 @@ EXPOSE 80
 
 #### 9.3. Orchestration (`docker-compose.yml`)
 
-A `docker-compose.yml` file will orchestrate the services, enabling one-command startup (`docker compose up`) with live reloading for development.
+A `docker-compose.yml` file will orchestrate the services, enabling one-command startup (`docker compose up`) with live reloading for development. It will include a health check to ensure the backend is ready before accepting traffic.
 
-### 10. Next Steps
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - DATABASE_URL=sqlite:///./data/pokedex.db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  data:
+```
+
+### 10. Testing Strategy
+
+To mitigate risks and ensure high quality, the following testing strategies will be implemented in addition to the standard unit and integration tests.
+
+#### 10.1. Data Ingestion Contract Testing
+
+The data ingestion script's dependency on the external PokeAPI will be managed via contract testing.
+*   **Mock Data:** A sample of the PokeAPI JSON responses will be captured and stored locally within the `backend/tests/` directory.
+*   **CI Reliability:** The test suite will run the ingestion logic against these local, static JSON files. This decouples the CI pipeline from the external service, ensuring fast and reliable test execution.
+*   **Negative Testing:** Tests will include malformed mock data (e.g., missing fields, incorrect types) to validate the script's error handling and data validation robustness.
+
+#### 10.2. HTML Fragment Validation
+
+To address the tight coupling between the backend and the HTMX-powered frontend, tests for HTML-generating endpoints will be created.
+*   **Tooling:** The `pytest` suite will use a library like `BeautifulSoup` to parse and inspect the HTML strings returned by the `/web/pokemon/search` endpoint.
+*   **Assertions:** Tests will assert the structural integrity of the HTML fragments, verifying the presence of key elements, IDs, and classes (e.g., `div#pokemon-display`, `h2` tag with correct text, `img` tag with correct `src`).
+
+### 11. Next Steps
 
 This architecture document provides a complete blueprint for the development team. The next phase is to translate the user stories from the PRD into implementation tasks, following the directory structure and technical specifications outlined above. The development agent can now begin work on the stories defined in Epic 1.
