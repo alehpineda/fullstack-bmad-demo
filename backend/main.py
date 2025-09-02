@@ -5,7 +5,7 @@ from fastapi import FastAPI
 app = FastAPI(
     title="Pokémon Search API",
     description="FastAPI backend for searching Pokémon information",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 
@@ -24,6 +24,7 @@ async def health_check():
 def main():
     """Main function for development server."""
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
 
 
