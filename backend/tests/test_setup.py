@@ -9,7 +9,7 @@ def test_hello_world():
 def test_python_version():
     """Test that we're using Python 3.13+."""
     import sys
-    
+
     assert sys.version_info >= (3, 13)
 
 
@@ -27,11 +27,12 @@ def test_fastapi_app():
     """Test that the FastAPI app can be created."""
     import sys
     import os
-    
+
     # Add the parent directory to the path so we can import main
     backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sys.path.insert(0, backend_dir)
-    
+
     from main import app
+
     assert app.title == "Pokémon Search API"
     assert app.version == "0.1.0"
