@@ -15,20 +15,12 @@ def test_python_version():
 
 def test_fastapi_import():
     """Test that FastAPI can be imported."""
-    try:
-        import fastapi  # noqa: F401
-        assert True
-    except ImportError:
-        assert False, "FastAPI not available"
+    import fastapi  # noqa: F401
 
 
 def test_uvicorn_import():
     """Test that uvicorn can be imported."""
-    try:
-        import uvicorn  # noqa: F401
-        assert True
-    except ImportError:
-        assert False, "uvicorn not available"
+    import uvicorn  # noqa: F401
 
 
 def test_fastapi_app():
