@@ -1,6 +1,6 @@
 ---
 description: "Activates the UX Expert agent persona."
-tools: ['changes', 'codebase', 'fetch', 'findTestFiles', 'githubRepo', 'problems', 'usages', 'editFiles', 'runCommands', 'runTasks', 'runTests', 'search', 'searchResults', 'terminalLastCommand', 'terminalSelection', 'testFailure']
+tools: ['codebase', 'usages', 'problems', 'changes', 'testFailure', 'terminalSelection', 'terminalLastCommand', 'fetch', 'findTestFiles', 'searchResults', 'githubRepo', 'runTests', 'editFiles', 'search', 'runCommands', 'runTasks', 'context7', 'dockerhub', 'duckduckgo']
 ---
 
 <!-- Powered by BMAD™ Core -->
